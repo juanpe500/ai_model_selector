@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>model_selector.js — live demo</title>
+<style>
+  :root{ --bg:#0a0d12; --panel:#11151c; --border:#222b38; --text:#cdd6e4; --muted:#8a94a6;
+         --accent:#00ffcc; --cyan:#00f0ff; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+        line-height:1.5; padding:0 20px 60px; }
+  .wrap{ max-width:820px; margin:0 auto; }
+  header{ padding:40px 0 8px; }
+  h1{ font-size:26px; margin:0 0 6px; }
+  h1 .acc{ color:var(--accent); }
+  .sub{ color:var(--muted); font-size:14px; margin:0 0 4px; }
+  .card{ background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:18px 0; }
+  h2{ font-size:13px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:0 0 12px; }
+  .btns{ display:flex; flex-wrap:wrap; gap:10px; }
+  button.demo{ background:#0d1017; color:var(--text); border:1px solid var(--border); border-radius:8px;
+        padding:11px 15px; font-size:14px; font-family:inherit; cursor:pointer; transition:border-color .12s, color .12s; }
+  button.demo:hover:not(:disabled){ border-color:var(--accent); color:var(--accent); }
+  button.demo:disabled{ opacity:.4; cursor:progress; }
+  .status{ display:flex; gap:16px; flex-wrap:wrap; font-size:13px; color:var(--muted); margin-top:12px; }
+  .status b{ color:var(--text); font-family:ui-monospace,Menlo,Consolas,monospace; }
+  .dot{ color:var(--accent); }
+  .picked{ margin-top:14px; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:13px;
+        background:#0d1017; border:1px solid var(--border); border-radius:8px; padding:12px 14px; min-height:44px;
+        white-space:pre-wrap; word-break:break-all; }
+  .picked .k{ color:var(--muted); display:inline-block; min-width:66px; }
+  .picked .v{ color:var(--accent); }
+  label.opt{ display:inline-flex; align-items:center; gap:7px; font-size:13px; color:var(--muted); cursor:pointer; }
+  code{ background:#0d1017; border:1px solid var(--border); border-radius:5px; padding:1px 6px; font-size:12.5px; color:var(--cyan); }
+  a{ color:var(--cyan); }
+  .err{ color:#ff9b9b; }
+  footer{ color:var(--muted); font-size:12.5px; margin-top:26px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🤖 model_selector<span class="acc">.js</span></h1>
+    <p class="sub">A dependency-free AI model picker modal. This page loads three <em>real</em> public catalogs
+       (OpenRouter, NVIDIA, ImageRouter) and drives the component exactly as a host would.</p>
+  </header>
+
+  <div class="card">
+    <h2>Try it</h2>
+    <div class="btns">
+      <button class="demo" data-mode="text"  disabled>Text → text <span style="color:var(--muted)">· OpenRouter + NVIDIA</span></button>
+      <button class="demo" data-mode="image" disabled>Image output <span style="color:var(--muted)">· ImageRouter</span></button>
+      <button class="demo" data-mode="all"   disabled>No modality filter <span style="color:var(--muted)">· all 3 tabs</span></button>
+    </div>
+    <div class="status" id="status">Loading catalogs…</div>
+    <div style="margin-top:12px;">
+      <label class="opt"><input type="checkbox" id="unconfig"> Simulate <code>ImageRouter</code> with no server key (shows ⚠ on its tab)</label>
+    </div>
+    <div class="picked" id="picked"><span class="k">result</span> <span style="color:var(--muted)">pick a model — its native id + source appear here</span></div>
+  </div>
+
+  <div class="card">
+    <h2>What this page does (the host's job)</h2>
+    <p class="sub" style="margin:0">The picker never fetches. This page loads the raw endpoint JSON from <code>./models/</code>,
+       assigns each to its <code>window</code> global, and — like the production backend — <b>enriches NVIDIA from the
+       OpenRouter catalog</b> (same ids) and forces its pricing free. Then it calls
+       <code>ModelSelectorModal.open({ … })</code> and reads back <code>onSelect(id, modelObj, api)</code>. View source for all of it.</p>
+  </div>
+
+  <footer>
+    Serve over http (GitHub Pages, jsDelivr, or <code>python -m http.server</code>) — <code>file://</code> blocks the catalog fetches.
+    · <a href="../README.md">README</a>
+  </footer>
+</div>
+
+<script src="../model_selector.js"></script>
+<script>
+(async function () {
+  const statusEl = document.getElementById('status');
+  const pickedEl = document.getElementById('picked');
+  const setStatus = (html) => statusEl.innerHTML = html;
+
+  // ── The host's catalog-shaping, all client-side so the demo needs no backend ──
+
+  // ImageRouter: bare array → {data:[...]} tagged with its source. Keep only
+  // image-output models (endpoint is already filtered; belt & suspenders).
+  function shapeImageRouter(arr) {
+    const data = (Array.isArray(arr) ? arr : (arr.data || []))
+      .filter(m => m && m.id && (m.output || []).includes('image'))
+      .map(m => Object.assign({ _api: 'imagerouter' }, m));
+    return { data };
+  }
+
+  // NVIDIA: OpenAI-style stripped list → OpenRouter shape. Mirrors the backend
+  // (_enrich_openai_style_models): borrow the full OpenRouter entry by id, force
+  // pricing free; ids OpenRouter doesn't know stay stripped-down. Tag the source.
+  function shapeNvidia(nv, openrouter) {
+    const orById = {};
+    for (const m of (openrouter.data || [])) if (m.id) orById[m.id] = m;
+    const src = Array.isArray(nv) ? nv : (nv.data || []);
+    const data = src.filter(m => m && m.id).map(m => {
+      const base = orById[m.id];
+      if (base) {
+        const e = Object.assign({}, base);
+        e.pricing = Object.assign({}, base.pricing, { prompt: '0', completion: '0' });
+        e._api = 'nvidia';
+        return e;
+      }
+      return {
+        id: m.id, name: m.id, created: m.created || 0, context_length: 0,
+        architecture: { input_modalities: ['text'], output_modalities: ['text'] },
+        pricing: { prompt: '0', completion: '0' }, _api: 'nvidia',
+      };
+    });
+    return { data };
+  }
+
+  async function getJSON(path) {
+    const r = await fetch(path);
+    if (!r.ok) throw new Error(path + ' → HTTP ' + r.status);
+    return r.json();
+  }
+
+  let ready = false;
+  try {
+    const [or, nvRaw, irRaw] = await Promise.all([
+      getJSON('./models/openrouter.json'),
+      getJSON('./models/nvidia.json'),
+      getJSON('./models/imagerouter.json'),
+    ]);
+
+    window.OPENROUTER_MODELS  = or;
+    window.NVIDIA_MODELS      = shapeNvidia(nvRaw, or);
+    window.IMAGEROUTER_MODELS = shapeImageRouter(irRaw);
+
+    const refreshStatus = () => {
+      const unconfig = document.getElementById('unconfig').checked;
+      window.MS_API_STATUS = {
+        openrouter:  { configured: true },
+        nvidia:      { configured: true },
+        imagerouter: { configured: !unconfig },
+      };
+      setStatus(
+        `<span><span class="dot">●</span> OpenRouter <b>${window.OPENROUTER_MODELS.data.length}</b></span>` +
+        `<span><span class="dot">●</span> NVIDIA <b>${window.NVIDIA_MODELS.data.length}</b> <span style="color:var(--muted)">(free)</span></span>` +
+        `<span><span class="dot">●</span> ImageRouter <b>${window.IMAGEROUTER_MODELS.data.length}</b>${unconfig ? ' <span class="err">⚠ no key</span>' : ''}</span>`
+      );
+    };
+    document.getElementById('unconfig').addEventListener('change', refreshStatus);
+    refreshStatus();
+    ready = true;
+    document.querySelectorAll('button.demo').forEach(b => b.disabled = false);
+  } catch (e) {
+    setStatus(`<span class="err">Failed to load catalogs: ${e.message}. Serve this over http (not file://).</span>`);
+    return;
+  }
+
+  const MODES = {
+    text:  { inputModalities:['text'], outputModalities:['text'], currentModel:'google/gemini-2.5-flash' },
+    image: { inputModalities:['text'], outputModalities:['image'], currentModel:'' },
+    all:   { inputModalities:[],       outputModalities:[],        currentModel:'' },
+  };
+
+  document.querySelectorAll('button.demo').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!ready) return;
+      const cfg = MODES[btn.dataset.mode];
+      ModelSelectorModal.open(Object.assign({}, cfg, {
+        onSelect: (id, modelObj, api) => {
+          // id is the NATIVE id (send to the provider); api is the source; the
+          // host would route on those two. Show them, plus the ':free'-safe label.
+          pickedEl.innerHTML =
+            `<div><span class="k">id</span> <span class="v">${id}</span></div>` +
+            `<div><span class="k">api</span> <span class="v">${api}</span></div>` +
+            `<div><span class="k">label</span> ${ModelSelectorModal.labelFor(modelObj)}</div>`;
+        },
+      }));
+    });
+  });
+})();
+</script>
+</body>
+</html>

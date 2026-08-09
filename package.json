@@ -1,0 +1,30 @@
+{
+  "name": "ai_model_selector",
+  "version": "1.0.0",
+  "description": "Dependency-free AI model picker modal — faceted search over OpenRouter, NVIDIA and ImageRouter catalogs. Single file, no build step.",
+  "main": "model_selector.js",
+  "files": [
+    "model_selector.js",
+    "README.md"
+  ],
+  "scripts": {
+    "demo": "python -m http.server 8000"
+  },
+  "keywords": [
+    "openrouter",
+    "nvidia",
+    "imagerouter",
+    "llm",
+    "model-picker",
+    "model-selector",
+    "ai",
+    "modal"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/juanpe500/ai_model_selector.git"
+  },
+  "homepage": "https://juanpe500.github.io/ai_model_selector/demo/",
+  "author": "juanpe500",
+  "license": "MIT"
+}
