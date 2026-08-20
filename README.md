@@ -1,20 +1,48 @@
-# model_selector.js
+<div align="center">
 
-A single-file, dependency-free **AI model picker modal**. It renders a themed,
-searchable, faceted list of models from one or more catalogs, and hands the
-picked model id back to you. No framework, no build step, no imports — it
-injects its own `<style>` and reads a few `window` globals.
+# 🤖 model_selector.js
+
+<b>A single-file, dependency-free AI model picker modal.</b><br>
+A themed, searchable, faceted list of models from one or more catalogs — hands the picked model id back to you.
+
+<p>
+  <a href="https://juanpe500.github.io/ai_model_selector/demo/"><img src="https://img.shields.io/badge/▶_live_demo-00ffcc?style=flat-square&labelColor=0a0d12" alt="Live demo"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3fb950?style=flat-square" alt="MIT License"></a>
+  <img src="https://img.shields.io/badge/dependencies-0-00f0ff?style=flat-square" alt="Zero dependencies">
+  <img src="https://img.shields.io/badge/build_step-none-8a94a6?style=flat-square" alt="No build step">
+  <img src="https://img.shields.io/badge/sources-OpenRouter_·_NVIDIA_·_ImageRouter-00ffcc?style=flat-square&labelColor=0a0d12" alt="Three sources">
+</p>
+
+<img src="assets/picker-text.png" alt="The model_selector modal: a searchable, faceted list of 500 AI models grouped by provider, with API tabs, filters and per-token pricing" width="100%">
+
+</div>
+
+No framework, no build step, no imports — it injects its own `<style>` and reads a few `window`
+globals. Point it at one or more model catalogs; it renders the picker and hands you back the id.
 
 **▶ [Live demo](https://juanpe500.github.io/ai_model_selector/demo/)** — loads three
 real public catalogs (OpenRouter, NVIDIA, ImageRouter) and drives the component.
 
-This is the **centralized** version, merged from three copies that had drifted
-apart across projects:
+This is the **centralized** version, merged from three copies that had drifted apart across projects:
 
-- **ImageRouter** support (image-generation models, per-image pricing, image
-  editing facets)
+- **ImageRouter** support (image-generation models, per-image pricing, image editing facets)
 - **Responsive** collapsible sidebar (off-canvas drawer on mobile)
-- **NVIDIA** as a first-class source (free, OpenRouter-shaped catalog).
+- **NVIDIA** as a first-class source (free, OpenRouter-shaped catalog)
+
+---
+
+### One component, every modality
+
+Ask for `text` and you get text models with per-token pricing. Ask for `image` output and the same
+picker swaps to image models with **per-image pricing**, an **image-editing** facet, and the
+ImageRouter source — same search, same facets, same code.
+
+<img src="assets/picker-image.png" alt="The picker in image mode: ImageRouter models with per-image pricing, image-editing and output-size facets" width="100%">
+
+> Every model is tagged with its source and merged into one list, separated by **API tabs**. The tab
+> strip only appears when 2+ sources have models for the requested modalities.
+
+---
 
 ## Quick start
 
@@ -129,3 +157,7 @@ python -m http.server 8000    # from the repo root
 
 `file://` won't work — the demo fetches the catalog fixtures, which browsers
 block over the file protocol.
+
+## License
+
+[MIT](LICENSE)
