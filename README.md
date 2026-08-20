@@ -6,11 +6,11 @@
 A themed, searchable, faceted list of models from one or more catalogs — hands the picked model id back to you.
 
 <p>
-  <a href="https://juanpe500.github.io/ai_model_selector/demo/"><img src="https://img.shields.io/badge/▶_live_demo-00ffcc?style=flat-square&labelColor=0a0d12" alt="Live demo"></a>
+  <a href="https://juanpe500.github.io/ai_model_selector/demo/"><img src="https://img.shields.io/badge/▶_live_demo-0d9488?style=flat-square" alt="Live demo"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3fb950?style=flat-square" alt="MIT License"></a>
-  <img src="https://img.shields.io/badge/dependencies-0-00f0ff?style=flat-square" alt="Zero dependencies">
-  <img src="https://img.shields.io/badge/build_step-none-8a94a6?style=flat-square" alt="No build step">
-  <img src="https://img.shields.io/badge/sources-OpenRouter_·_NVIDIA_·_ImageRouter-00ffcc?style=flat-square&labelColor=0a0d12" alt="Three sources">
+  <img src="https://img.shields.io/badge/dependencies-0-0891b2?style=flat-square" alt="Zero dependencies">
+  <img src="https://img.shields.io/badge/build_step-none-475569?style=flat-square" alt="No build step">
+  <img src="https://img.shields.io/badge/sources-OpenRouter_·_NVIDIA_·_ImageRouter-0d9488?style=flat-square&labelColor=1e293b" alt="Three sources">
 </p>
 
 <img src="assets/picker-text.png" alt="The model_selector modal: a searchable, faceted list of 500 AI models grouped by provider, with API tabs, filters and per-token pricing" width="100%">
